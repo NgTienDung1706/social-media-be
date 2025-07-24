@@ -1,6 +1,7 @@
 const express = require('express');
 require('dotenv').config();
 const http = require('http');
+const cors = require('cors');
 //const { Server } = require('socket.io');
 const initRoutes = require('./routes');
 const connectDB = require("./config/mongodb");
@@ -12,6 +13,13 @@ const server = http.createServer(app);
 // const io = new Server(server, {
 //     cors: { origin: "*", methods: ["GET", "POST"] }
 // });
+
+//app.use(cors()); // Không cần truyền object
+
+app.use(cors({
+    origin: "http://localhost:5173", // FE chạy ở đây
+    credentials: true // Nếu bạn dùng cookie, jwt với header
+}));
 
 app.use(express.json());
 

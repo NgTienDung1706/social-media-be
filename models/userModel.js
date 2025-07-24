@@ -8,7 +8,10 @@ const userSchema = new mongoose.Schema({
   otp: { type: String, default: null },
   otpExpiresAt: { type: Date, default: null },
   profile: {
-    name: { type: String, default: "" },
+    lastname: { type: String, default: "" },
+    firstname: { type: String, default: "" },
+    gender: { type: String, default: "" }, // Giới tính
+    birthday: { type: Date, default: null },  // Ngày sinh
     bio: { type: String, default: "" },
     avatar: { type: String, default: "" }, // Đường dẫn ảnh đại diện
   },
