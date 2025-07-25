@@ -170,9 +170,108 @@ const verifyOTP = async (email, otp) => {
     };
 };
 
+// 📌 Quên mật khẩu
+const forgotPassword = async (email) => {
+    if (!email) {
+        return {
+            status: 400,
+            data: { message: "Vui lòng nhập email" }
+        };
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+        return {
+            status: 404,
+            data: { message: "Không tìm thấy người dùng" }
+        };
+    }
+    // Tạo OTP mới cho quên mật khẩu
+    const otp = crypto.randomInt(100000, 999999).toString();
+    user.otp = otp;
+    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+    await sendMail(email, "Quên mật khẩu", `Mã OTP đặt lại mật khẩu của bạn là: ${otp}`);
+    return {
+        status: 200,
+        data: { message: "Mã OTP đã được gửi tới email của bạn." }
+    };
+};
+
+// 📌 Xác thực OTP quên mật khẩu
+const forgotPasswordOTP = async (email, otp) => {
+    if (!email || !otp) {
+        return {
+            status: 400,
+            data: { message: "Vui lòng cung cấp email và mã OTP" }
+        };
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+        return {
+            status: 404,
+            data: { message: "Không tìm thấy người dùng" }
+        };
+    }
+    if (user.otp !== otp) {
+        return {
+            status: 400,
+            data: { message: "Mã OTP không đúng" }
+        };
+    }
+    if (!user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+        return {
+            status: 400,
+            data: { message: "Mã OTP đã hết hạn" }
+        };
+    }
+    // Đánh dấu đã xác thực OTP cho quên mật khẩu
+    user.isVerifiedForgot = true;
+    await user.save();
+    return {
+        status: 200,
+        data: { message: "Xác thực OTP thành công. Bạn có thể đặt lại mật khẩu mới." }
+    };
+};
+
+// 📌 Đặt lại mật khẩu
+const resetPassword = async (email, newPassword) => {
+    if (!email || !newPassword) {
+        return {
+            status: 400,
+            data: { message: "Vui lòng nhập email và mật khẩu mới" }
+        };
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+        return {
+            status: 404,
+            data: { message: "Không tìm thấy người dùng" }
+        };
+    }
+    // Kiểm tra đã xác thực OTP quên mật khẩu chưa
+    if (!user.isVerifiedForgot) {
+        return {
+            status: 400,
+            data: { message: "Bạn chưa xác thực OTP quên mật khẩu" }
+        };
+    }
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.isVerifiedForgot = false;
+    user.otp = null;
+    user.otpExpiresAt = null;
+    await user.save();
+    return {
+        status: 200,
+        data: { message: "Đổi mật khẩu thành công." }
+    };
+};
+
 module.exports = {
     loginUser,
     getUserProfile,
     registerUser,
-    verifyOTP
+    verifyOTP,
+    forgotPassword,
+    forgotPasswordOTP,
+    resetPassword
 };

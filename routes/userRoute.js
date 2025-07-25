@@ -8,6 +8,9 @@ const auth = require('../middleware/auth');
 router.post('/login', ctrls.login);
 router.post('/register', ctrls.register);
 router.post('/verify-otp', ctrls.verifyOTP);
+router.post('/forgot-password', ctrls.forgotPassword);
+router.post('/verify-forgot-otp', ctrls.forgotPasswordOTP);
+router.post('/reset-password', ctrls.resetPassword);
 
 router.post('/home',auth, ctrls.login);
 

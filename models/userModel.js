@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   isVerified: { type: Boolean, default: false },
+  isVerifiedForgot: { type: Boolean, default: false }, // Đánh dấu đã xác thực OTP quên mật khẩu
   otp: { type: String, default: null },
   otpExpiresAt: { type: Date, default: null },
   profile: {
