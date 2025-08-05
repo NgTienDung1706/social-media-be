@@ -1,5 +1,6 @@
 require("dotenv").config();
 const User = require("../models/userModel");
+const Post = require('../models/postModel');
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
@@ -110,13 +111,28 @@ const loginUser = async (email, password) => {
 
 // 📌 Lấy thông tin người dùng theo ID
 const getUserProfile = async (userId) => {
-  const user = await User.findById(userId).select("-password");
-  if (!user) {
+  const userDoc = await User.findById(userId).select("-password");
+  if (!userDoc) {
     return {
       status: 404,
       data: { message: "Không tìm thấy người dùng" }
     };
   }
+
+  const user = userDoc.toObject();
+
+  // Lấy số lượng bài viết, follower, following
+
+  const postCount = await Post.countDocuments({ author: user._id });
+  // followerCount: số người theo dõi user này
+  const followerCount = Array.isArray(user.friends.follower) ? user.friends.follower.length : (user.friends.follower ? user.friends.follower : 0);
+  // followingCount: số người user này đang theo dõi
+  const followingCount = Array.isArray(user.friends.following) ? user.friends.following.length : (user.friends.following ? user.friends.following : 0);
+
+  // Gắn trực tiếp vào user
+  user.postCount = postCount;
+  user.followerCount = followerCount;
+  user.followingCount = followingCount;
 
   return {
     status: 200,
@@ -266,6 +282,50 @@ const resetPassword = async (email, newPassword) => {
     };
 };
 
+
+// 📌 Cập nhật thông tin profile người dùng
+const updateUserProfile = async (user, body, file) => {
+    try {
+        const { username, lastname, firstname, birthday, bio } = body;
+        // Đảm bảo user.profile tồn tại
+
+        // Chỉ cập nhật avatar nếu có file mới, nếu không thì không gửi trường avatar vào update
+        const updateFields = {
+            username,
+            'profile.lastname': lastname,
+            'profile.firstname': firstname,
+            'profile.birthday': birthday,
+            'profile.bio': bio,
+        };
+        if (file && file.path) {
+            updateFields['profile.avatar'] = file.path;
+        }
+
+        await User.findByIdAndUpdate(
+            user.id,
+            updateFields,
+            { new: true }
+        );
+
+        // Lấy lại user mới nhất sau khi cập nhật
+        const updatedUser = await User.findById(user._id).select('-password');
+
+        return {
+            status: 200,
+            data: {
+                success: true,
+                message: 'Cập nhật thông tin cá nhân thành công!',
+                user: updatedUser
+            }
+        };
+    } catch (err) {
+        return {
+            status: 500,
+            data: { success: false, message: 'Cập nhật thất bại', error: err.message }
+        };
+    }
+};
+
 module.exports = {
     loginUser,
     getUserProfile,
@@ -273,5 +333,6 @@ module.exports = {
     verifyOTP,
     forgotPassword,
     forgotPasswordOTP,
-    resetPassword
+    resetPassword,
+    updateUserProfile
 };

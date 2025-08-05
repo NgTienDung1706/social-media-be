@@ -1,4 +1,5 @@
 const userService = require("../services/userService");
+const User = require('../models/userModel');
 
 
 const login = async (req, res) => {
@@ -101,6 +102,16 @@ const resetPassword = async (req, res) => {
     }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const result = await userService.updateUserProfile(req.user, req.body, req.file);
+    return res.status(result.status).json(result.data);
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Cập nhật thất bại', error: err.message });
+  }
+};
+
+
 
 module.exports = {
     login,
@@ -109,5 +120,6 @@ module.exports = {
     verifyOTP,
     forgotPassword,
     forgotPasswordOTP,
-    resetPassword
+    resetPassword,
+    updateProfile
 };

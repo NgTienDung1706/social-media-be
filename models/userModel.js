@@ -19,9 +19,8 @@ const userSchema = new mongoose.Schema({
 
   // Danh sách bạn bè
   friends: {
-    pending: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
-    accepted: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
-    blocked: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
+    follower: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
   },
   
   },
