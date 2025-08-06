@@ -12,8 +12,11 @@ const auth = (req, res, next) => {
             //verify token
             try {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                req.user = decoded;
-                console.log(">>> check token: ", decoded)
+                req.user = {
+                    id: decoded.id,
+                    username: decoded.username
+                };
+                //console.log(">>> check token: ", decoded)
                 next();
             } catch (error) {
                 return res.status(401).json({

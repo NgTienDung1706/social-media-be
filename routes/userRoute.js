@@ -17,6 +17,9 @@ router.post('/reset-password', ctrls.resetPassword);
 router.post('/home',auth, ctrls.login);
 
 router.get("/profile", auth, ctrls.getProfile);
+router.get('/profile/:username', auth, ctrls.getUserProfileByUsername);
 router.put('/profile', auth ,upload.single('avatar'), ctrls.updateProfile);
+
+router.get('/search', auth, ctrls.searchUsers);
 
 module.exports = router

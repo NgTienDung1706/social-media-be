@@ -1,6 +1,18 @@
 const userService = require("../services/userService");
 const User = require('../models/userModel');
+const { tokenize } = require("../utils/searchHelper");
 
+
+// Lấy profile user theo username
+const getUserProfileByUsername = async (req, res) => {
+  try {
+    const username = req.params.username;
+    const result = await userService.getUserProfileByUsername(username);
+    return res.status(result.status).json(result.data);
+  } catch (error) {
+    return res.status(500).json({ message: "Lỗi server" });
+  }
+};
 
 const login = async (req, res) => {
     const { email, password } = req.body;
@@ -111,6 +123,22 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const searchUsers = async (req, res) => {
+  const { query } = req.query;
+    if (!query) {
+        return res.status(400).json({ message: "Vui lòng cung cấp từ khóa tìm kiếm" });
+    }
+
+    try {
+        const userId = req.user.id;
+        const result = await userService.searchUsers(query, userId);
+        return res.status(result.status).json(result.data);
+    } catch (error) {
+        console.error("Lỗi tìm kiếm người dùng:", error);
+        return res.status(500).json({ message: "Đã xảy ra lỗi, vui lòng thử lại." });
+    }
+}
+
 
 
 module.exports = {
@@ -121,5 +149,7 @@ module.exports = {
     forgotPassword,
     forgotPasswordOTP,
     resetPassword,
-    updateProfile
+    updateProfile,
+    searchUsers,
+    getUserProfileByUsername
 };

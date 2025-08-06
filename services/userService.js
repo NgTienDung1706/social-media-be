@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendMail } = require("../utils/mail");
+const { tokenize, normalizeQuery } = require("../utils/searchHelper");
 // 📌 Xử lý logic đăng ký
 const registerUser = async (body) => {
     const {
@@ -74,8 +75,8 @@ const registerUser = async (body) => {
 };
 
 //📌 Hàm tạo JWT
-const generateToken = (userId) => {
-    return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+const generateToken = (userId, username) => {
+    return jwt.sign({ id: userId, username }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN || "7d",
     });
 };
@@ -91,7 +92,7 @@ const loginUser = async (email, password) => {
         };
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.username);
 
     return {
         status: 200,
@@ -288,7 +289,17 @@ const updateUserProfile = async (user, body, file) => {
     try {
         const { username, lastname, firstname, birthday, bio } = body;
         // Đảm bảo user.profile tồn tại
-
+        // ✅ Kiểm tra username đã tồn tại cho user khác
+        const existingUser = await User.findOne({
+            username: username,
+            _id: { $ne: user._id } // bỏ qua chính user đang sửa
+        });
+        if (existingUser) {
+            return {
+                status: 400,
+                data: { success: false, message: 'Tên người dùng đã tồn tại, vui lòng chọn tên khác!' }
+            };
+        }
         // Chỉ cập nhật avatar nếu có file mới, nếu không thì không gửi trường avatar vào update
         const updateFields = {
             username,
@@ -326,6 +337,130 @@ const updateUserProfile = async (user, body, file) => {
     }
 };
 
+const searchUsers = async (query, currentUserId) => {
+  const keywords = tokenize(query);
+  const normalized = normalizeQuery(query);
+
+  // Điều kiện tìm kiếm (username hoặc họ tên)
+  const regexConditions = keywords.flatMap(kw => ([
+    { username: { $regex: kw, $options: "i" } },
+    { "profile.firstname": { $regex: kw, $options: "i" } },
+    { "profile.lastname": { $regex: kw, $options: "i" } }
+  ]));
+
+  // Lấy dữ liệu thô
+//   let users = await User.find(
+//     { $or: regexConditions },
+//     {
+//       _id: 1,
+//       username: 1,
+//       "profile.firstname": 1,
+//       "profile.lastname": 1,
+//       "profile.avatar": 1
+//     }
+//   )
+//     .limit(20)
+//     .lean();
+  let users = await User.find(
+  { 
+    $or: regexConditions,
+    _id: { $ne: currentUserId }  // Loại bỏ chính mình
+  },
+  {
+    _id: 1,
+    username: 1,
+    "profile.firstname": 1,
+    "profile.lastname": 1,
+    "profile.avatar": 1
+  }
+)
+.limit(20)
+.lean();
+
+
+  // Gộp firstname và lastname thành fullName
+  users = users.map(u => ({
+    _id: u._id,
+    username: u.username,
+    fullName: `${u.profile?.lastname || ""} ${u.profile?.firstname || ""}`.trim(),
+    avatar: u.profile?.avatar || ""
+  }));
+
+  // Sắp xếp ưu tiên username khớp trước
+  users.sort((a, b) => {
+    const aUser = a.username.toLowerCase();
+    const bUser = b.username.toLowerCase();
+    const aFull = a.fullName.toLowerCase();
+    const bFull = b.fullName.toLowerCase();
+
+    if (aUser === normalized && bUser !== normalized) return -1;
+    if (bUser === normalized && aUser !== normalized) return 1;
+
+    if (aUser.includes(normalized) && !bUser.includes(normalized)) return -1;
+    if (bUser.includes(normalized) && !aUser.includes(normalized)) return 1;
+
+    if (aFull.includes(normalized) && !bFull.includes(normalized)) return -1;
+    if (bFull.includes(normalized) && !aFull.includes(normalized)) return 1;
+
+    return 0;
+  });
+
+  return {
+    status: 200,
+    data: {
+      message: "Tìm kiếm người dùng thành công",
+      users
+    }
+  };
+}
+
+const getUserProfileByUsername = async (username) => {
+  try {
+    // Tìm user theo username
+    const userDoc = await User.findOne({ username }).select("-password");
+    if (!userDoc) {
+      return {
+        status: 404,
+        data: { message: "Không tìm thấy người dùng" }
+      };
+    }
+
+    const user = userDoc.toObject();
+
+    // Lấy số lượng bài viết
+    const postCount = await Post.countDocuments({ author: user._id });
+
+    // followerCount: số người theo dõi user này
+    const followerCount = Array.isArray(user.friends?.follower)
+      ? user.friends.follower.length
+      : (user.friends?.follower || 0);
+
+    // followingCount: số người user này đang theo dõi
+    const followingCount = Array.isArray(user.friends?.following)
+      ? user.friends.following.length
+      : (user.friends?.following || 0);
+
+    // Gắn trực tiếp vào user
+    user.postCount = postCount;
+    user.followerCount = followerCount;
+    user.followingCount = followingCount;
+
+    return {
+      status: 200,
+      data: {
+        message: "Lấy thông tin người dùng thành công",
+        user
+      }
+    };
+  } catch (err) {
+    return {
+      status: 500,
+      data: { message: "Lỗi server", error: err.message }
+    };
+  }
+};
+
+
 module.exports = {
     loginUser,
     getUserProfile,
@@ -334,5 +469,7 @@ module.exports = {
     forgotPassword,
     forgotPasswordOTP,
     resetPassword,
-    updateUserProfile
+    updateUserProfile,
+    searchUsers,
+    getUserProfileByUsername
 };
