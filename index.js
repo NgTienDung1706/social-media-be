@@ -2,6 +2,7 @@ const express = require('express');
 require('dotenv').config();
 const http = require('http');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 //const { Server } = require('socket.io');
 const initRoutes = require('./routes');
 const connectDB = require("./config/mongodb");
@@ -20,7 +21,7 @@ app.use(cors({
     origin: "http://localhost:5173", // FE chạy ở đây
     credentials: true // Nếu bạn dùng cookie, jwt với header
 }));
-
+app.use(cookieParser());
 app.use(express.json());
 
 // Thêm middleware để attach io vào req

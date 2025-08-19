@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema({
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
   },
   
+  refreshToken: { type: String, default: null }, // Lưu refresh token để xác thực lại
   },
   { timestamps: true }
 );

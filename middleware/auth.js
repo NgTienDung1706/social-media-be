@@ -11,10 +11,9 @@ const auth = (req, res, next) => {
 
             //verify token
             try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
                 req.user = {
-                    id: decoded.id,
-                    username: decoded.username
+                    id: decoded.id,    
                 };
                 //console.log(">>> check token: ", decoded)
                 next();

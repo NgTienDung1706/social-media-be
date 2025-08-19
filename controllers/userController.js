@@ -2,6 +2,30 @@ const userService = require("../services/userService");
 const User = require('../models/userModel');
 const { tokenize } = require("../utils/searchHelper");
 
+const login = async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ message: "Vui lòng cung cấp email và password" });
+    }
+
+    try {
+        const result = await userService.loginUser(email, password);
+        if (result.status === 200) {
+        res.cookie("refreshToken", result.refreshToken, {
+              httpOnly: true,
+              secure: false,
+              sameSite: "Strict",
+               maxAge: 30 * 24 * 60 * 60 * 1000
+        });
+        return res.status(result.status).json(result.data);
+        }
+        return res.status(result.status).json(result.data);
+    } catch (error) {
+        console.error("Lỗi khi đăng nhập:", error);
+        return res.status(500).json({ message: "Đã xảy ra lỗi, vui lòng thử lại sau" });
+    }
+};
 
 // Lấy profile user theo username
 const getUserProfileByUsername = async (req, res) => {
@@ -12,22 +36,6 @@ const getUserProfileByUsername = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: "Lỗi server" });
   }
-};
-
-const login = async (req, res) => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({ message: "Vui lòng cung cấp email và password" });
-    }
-
-    try {
-        const result = await userService.loginUser(email, password);
-        return res.status(result.status).json(result.data);
-    } catch (error) {
-        console.error("Lỗi khi đăng nhập:", error);
-        return res.status(500).json({ message: "Đã xảy ra lỗi, vui lòng thử lại sau" });
-    }
 };
 
 
@@ -138,9 +146,67 @@ const searchUsers = async (req, res) => {
         return res.status(500).json({ message: "Đã xảy ra lỗi, vui lòng thử lại." });
     }
 }
+const getMyInfo = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId).select("-password -otp -__v");
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
+    }
+    return res.status(200).json({ success: true, user });
+  } catch (err) {
+    console.error("Lỗi lấy thông tin người dùng:", err);
+    return res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+}
 
+const refreshToken = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    return res.status(401).json({ message: "Không có refresh token" });
+  }
 
+  try {
+    const result = await userService.refreshToken(refreshToken);
+    if (result.status !== 200) {
+      return res.status(result.status).json(result.data);
+    }
 
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "Strict",
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 ngày
+    });
+
+    return res.status(result.status).json(result.data);
+  } catch (error) {
+    console.error("Lỗi làm mới token:", error);
+    return res.status(500).json({ message: "Đã xảy ra lỗi, vui lòng thử lại." });
+  }
+}
+
+const logout = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    return res.status(401).json({ message: "Không có refresh token" });
+  }
+  try {
+    const result = await userService.logout(refreshToken);
+    if (result.status !== 200) {
+      return res.status(result.status).json(result.data);
+    }
+    res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: false,
+        sameSite: "Strict"
+    });
+    return res.status(200).json({ message: "Đăng xuất thành công" });
+  } catch (error) {
+    console.error("Lỗi đăng xuất:", error);
+    return res.status(500).json({ message: "Đã xảy ra lỗi, vui lòng thử lại." });
+  }
+}
 module.exports = {
     login,
     getProfile,
@@ -151,5 +217,8 @@ module.exports = {
     resetPassword,
     updateProfile,
     searchUsers,
-    getUserProfileByUsername
+    getUserProfileByUsername,
+    getMyInfo,
+    refreshToken,
+    logout
 };
