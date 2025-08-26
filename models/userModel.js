@@ -18,10 +18,10 @@ const userSchema = new mongoose.Schema({
   },
 
   // Danh sách bạn bè
-  friends: {
-    follower: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
-    following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
-  },
+  // friends: {
+  //   follower: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
+  //   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],
+  // },
   
   refreshToken: { type: String, default: null }, // Lưu refresh token để xác thực lại
   },

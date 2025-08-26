@@ -1,10 +1,12 @@
 const userRouter = require('./userRoute')
+const relationshipRouter = require('./relationshipRoute')
 // const conversationRouter = require('./conversation')
 // const messageRouter = require('./message')
 const postRouter = require('./postRoute')
 // const commentRouter = require('./commentRoute')
 const initRoutes = (app) => {
     app.use('/api/v1', userRouter),
+    app.use('/api/v1/relationship', relationshipRouter),
     // app.use('/api', conversationRouter)
     // app.use('/api/message', messageRouter)
     app.use('/api/v1/post', postRouter)

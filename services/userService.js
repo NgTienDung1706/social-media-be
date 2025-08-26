@@ -1,6 +1,7 @@
 require("dotenv").config();
 const User = require("../models/userModel");
 const Post = require("../models/postModel");
+const Relationship = require("../models/relationshipModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
@@ -17,15 +18,19 @@ const deleteInfo = (user) => {
   delete userSafe.isVerified;
   delete userSafe.__v; // nếu muốn
   return userSafe;
-}
+};
 
 //📌 Hàm tạo JWT
 const generateAccessToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "15m" });
+  return jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "15m",
+  });
 };
 
 const generateRefreshToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "30d" });
+  return jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "30d",
+  });
 };
 
 // 📌 Xử lý logic đăng nhập
@@ -104,7 +109,7 @@ const refreshToken = async (token) => {
       data: { message: "Token không hợp lệ" },
     };
   }
-}
+};
 // 📌 Lấy thông tin người dùng theo ID
 const getUserProfile = async (userId) => {
   const userDoc = await User.findById(userId).select("-password");
@@ -115,34 +120,49 @@ const getUserProfile = async (userId) => {
     };
   }
 
-  const user = userDoc.toObject();
+  //const user = userDoc.toObject();
 
   // Lấy số lượng bài viết, follower, following
 
-  const postCount = await Post.countDocuments({ author: user._id });
+  const postCount = await Post.countDocuments({ author: userDoc._id });
   // followerCount: số người theo dõi user này
-  const followerCount = Array.isArray(user.friends.follower)
-    ? user.friends.follower.length
-    : user.friends.follower
-    ? user.friends.follower
-    : 0;
+  // const followerCount = Array.isArray(user.friends.follower)
+  //   ? user.friends.follower.length
+  //   : user.friends.follower
+  //   ? user.friends.follower
+  //   : 0;
+  const followerCount = await Relationship.countDocuments({
+    to: userDoc._id,
+    type: "follow",
+  });
   // followingCount: số người user này đang theo dõi
-  const followingCount = Array.isArray(user.friends.following)
-    ? user.friends.following.length
-    : user.friends.following
-    ? user.friends.following
-    : 0;
+  const followingCount = await Relationship.countDocuments({
+    from: userDoc._id,
+    type: "follow",
+  });
+  // const followingCount = Array.isArray(user.friends.following)
+  //   ? user.friends.following.length
+  //   : user.friends.following
+  //   ? user.friends.following
+  //   : 0;
 
   // Gắn trực tiếp vào user
-  user.postCount = postCount;
-  user.followerCount = followerCount;
-  user.followingCount = followingCount;
+  //user.postCount = postCount;
+  //user.followerCount = followerCount;
+  //user.followingCount = followingCount;
+
+  const user = deleteInfo(userDoc); // Loại bỏ thông tin nhạy cảm
 
   return {
     status: 200,
     data: {
       message: "Lấy thông tin người dùng thành công",
-      user,
+      user:{
+        ...user,
+        postCount,
+        followerCount,
+        followingCount,
+      },
     },
   };
 };
@@ -362,8 +382,8 @@ const updateUserProfile = async (user, body, file) => {
     const me = await User.findById(user.id);
     let canUpdate = true;
     if (
-      typeof username === 'string' &&
-      typeof me.username === 'string' &&
+      typeof username === "string" &&
+      typeof me.username === "string" &&
       username.trim() &&
       username.trim() !== me.username
     ) {
@@ -510,31 +530,47 @@ const getUserProfileByUsername = async (username) => {
       };
     }
 
-    const user = userDoc.toObject();
+    //const user = userDoc.toObject();
 
     // Lấy số lượng bài viết
-    const postCount = await Post.countDocuments({ author: user._id });
+    const postCount = await Post.countDocuments({ author: userDoc._id });
 
     // followerCount: số người theo dõi user này
-    const followerCount = Array.isArray(user.friends?.follower)
-      ? user.friends.follower.length
-      : user.friends?.follower || 0;
+    // const followerCount = Array.isArray(user.friends?.follower)
+    //   ? user.friends.follower.length
+    //   : user.friends?.follower || 0;
 
+    // // followingCount: số người user này đang theo dõi
+    // const followingCount = Array.isArray(user.friends?.following)
+    //   ? user.friends.following.length
+    //   : user.friends?.following || 0;
+    const followerCount = await Relationship.countDocuments({
+      to: userDoc._id,
+      type: "follow",
+    });
     // followingCount: số người user này đang theo dõi
-    const followingCount = Array.isArray(user.friends?.following)
-      ? user.friends.following.length
-      : user.friends?.following || 0;
+    const followingCount = await Relationship.countDocuments({
+      from: userDoc._id,
+      type: "follow",
+    });
 
     // Gắn trực tiếp vào user
-    user.postCount = postCount;
-    user.followerCount = followerCount;
-    user.followingCount = followingCount;
+    //user.postCount = postCount;
+    //user.followerCount = followerCount;
+    //user.followingCount = followingCount;
+
+    const userSafe = deleteInfo(userDoc); // Loại bỏ thông tin nhạy cảm
 
     return {
       status: 200,
       data: {
         message: "Lấy thông tin người dùng thành công",
-        user,
+        user: {
+          ...userSafe,
+          postCount,
+          followerCount,
+          followingCount,
+        }, // Trả về user đã loại bỏ password và refreshToken
       },
     };
   } catch (err) {
