@@ -33,6 +33,20 @@ const generateRefreshToken = (userId) => {
   });
 };
 
+const getRelationshipStatuses = async (currentUserId, userId) => {
+  const relationships = await Relationship.find({
+    from: currentUserId,
+    to: userId,
+    type: "follow",
+  }).lean();
+  if (!relationships || relationships.length === 0) {
+    return {};
+  }
+  return {
+    following: true,
+  };
+};
+
 // 📌 Xử lý logic đăng nhập
 const loginUser = async (email, password) => {
   const user = await User.findOne({ email });
@@ -157,7 +171,7 @@ const getUserProfile = async (userId) => {
     status: 200,
     data: {
       message: "Lấy thông tin người dùng thành công",
-      user:{
+      user: {
         ...user,
         postCount,
         followerCount,
@@ -519,7 +533,7 @@ const searchUsers = async (query, currentUserId) => {
   };
 };
 
-const getUserProfileByUsername = async (username) => {
+const getUserProfileByUsername = async (username, currentUserId) => {
   try {
     // Tìm user theo username
     const userDoc = await User.findOne({ username }).select("-password");
@@ -561,6 +575,30 @@ const getUserProfileByUsername = async (username) => {
 
     const userSafe = deleteInfo(userDoc); // Loại bỏ thông tin nhạy cảm
 
+    if (currentUserId === userDoc._id) {
+      // Nếu là chính mình, không cần gọi API lấy relationship status
+      return {
+        status: 200,
+        data: {
+          message: "Lấy thông tin người dùng thành công",
+          user: {
+            ...userSafe,
+            postCount,
+            followerCount,
+            followingCount,
+            relationship_status: {
+              isMe: true,
+              following: false,
+            },
+          }, // Trả về user đã loại bỏ password và refreshToken
+        },
+      };
+    }
+    // Lấy relationship status giữa currentUserId và userDoc._id
+    const relationship_status = await getRelationshipStatuses(
+      currentUserId,
+      userDoc._id
+    );
     return {
       status: 200,
       data: {
@@ -570,6 +608,7 @@ const getUserProfileByUsername = async (username) => {
           postCount,
           followerCount,
           followingCount,
+          relationship_status,
         }, // Trả về user đã loại bỏ password và refreshToken
       },
     };

@@ -5,10 +5,16 @@ const relationshipService = require("../services/relationshipService");
  */
 const getFollowers = async (req, res) => {
   try {
-    const { username } = req.params ;
+    const { username } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
-    const followers = await relationshipService.getFollowers(username, page, limit);
+    const myuserid = req.user.id; // từ JWT
+    const followers = await relationshipService.getFollowers(
+      username,
+      myuserid,
+      page,
+      limit
+    );
     res.status(200).json(followers);
   } catch (err) {
     console.error(err);
@@ -21,13 +27,19 @@ const getFollowings = async (req, res) => {
     const { username } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
-    const followings = await relationshipService.getFollowings(username, page, limit);
+    const myuserid = req.user.id; // từ JWT
+    const followings = await relationshipService.getFollowings(
+      username,
+      myuserid,
+      page,
+      limit
+    );
     res.status(200).json(followings);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Lỗi server" });
   }
-} 
+};
 
 /**
  * API 2: Nhận danh sách userIds, trả về relationship statuses
@@ -35,14 +47,74 @@ const getFollowings = async (req, res) => {
 const getRelationshipStatuses = async (req, res) => {
   try {
     const currentUserId = req.user.id; // từ JWT
-    const { userIds } = req.body;      // array userId
+    const { userIds } = req.body; // array userId
 
     if (!Array.isArray(userIds)) {
       return res.status(400).json({ message: "userIds phải là mảng" });
     }
 
-    const relationship_status = await relationshipService.getRelationshipStatuses(currentUserId, userIds);
+    const relationship_status =
+      await relationshipService.getRelationshipStatuses(currentUserId, userIds);
     res.status(200).json(relationship_status);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+const followUser = async (req, res) => {
+  try {
+    const currentUserId = req.user.id; // từ JWT
+    const { userId } = req.params;
+
+    if (currentUserId === userId) {
+      return res.status(400).json({ message: "Không thể follow chính mình" });
+    }
+
+    const result = await relationshipService.followUser(currentUserId, userId);
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+const unfollowUser = async (req, res) => {
+  try {
+    const currentUserId = req.user.id; // từ JWT
+    const { userId } = req.params;
+
+    if (currentUserId === userId) {
+      return res.status(400).json({ message: "Không thể unfollow chính mình" });
+    }
+
+    const result = await relationshipService.unfollowUser(
+      currentUserId,
+      userId
+    );
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+const removeFollower = async (req, res) => {
+  try {
+    const currentUserId = req.user.id; // từ JWT
+    const { userId } = req.params;
+
+    if (currentUserId === userId) {
+      return res
+        .status(400)
+        .json({ message: "Không thể xóa chính mình khỏi followers" });
+    }
+
+    const result = await relationshipService.removeFollower(
+      currentUserId,
+      userId
+    );
+    res.status(200).json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Lỗi server" });
@@ -53,4 +125,7 @@ module.exports = {
   getFollowers,
   getFollowings,
   getRelationshipStatuses,
+  followUser,
+  unfollowUser,
+  removeFollower,
 };
