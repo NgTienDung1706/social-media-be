@@ -40,9 +40,13 @@ const getRelationshipStatuses = async (currentUserId, userId) => {
     type: "follow",
   }).lean();
   if (!relationships || relationships.length === 0) {
-    return {};
+    return {
+      isMe: false,
+      following: false,
+    };
   }
   return {
+    isMe: false,
     following: true,
   };
 };
@@ -574,8 +578,7 @@ const getUserProfileByUsername = async (username, currentUserId) => {
     //user.followingCount = followingCount;
 
     const userSafe = deleteInfo(userDoc); // Loại bỏ thông tin nhạy cảm
-
-    if (currentUserId === userDoc._id) {
+    if (currentUserId === String(userDoc._id)) {
       // Nếu là chính mình, không cần gọi API lấy relationship status
       return {
         status: 200,
