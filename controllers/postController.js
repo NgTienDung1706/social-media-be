@@ -14,7 +14,6 @@ const getMyPosts = async (req, res) => {
       .json({ message: "Lỗi server khi lấy bài viết", error: err.message });
   }
 };
-
 // Lấy danh sách bài viết của user theo username
 const getUserPostsByUsername = async (req, res) => {
   try {

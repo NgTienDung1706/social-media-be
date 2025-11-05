@@ -66,6 +66,7 @@ const getPostsByUser = async (userId, page, limit) => {
       emotion: post.emotion || {},
       tagged_users:
         post.tagged_users.map((user) => ({
+          _id: user._id,
           username: user.username || "",
           avatar: user.profile?.avatar || "",
           fullname: `${user.profile?.firstname || ""} ${
@@ -77,6 +78,7 @@ const getPostsByUser = async (userId, page, limit) => {
       reactions: post.reactions || {},
       likes: post.reactions?.love?.length || 0,
       commentCount: commentCountMap[post._id] || 0,
+      visibility: post.visibility || "public",
     };
   });
 
