@@ -1,14 +1,14 @@
-const messageService = require("../services/messageService");
+import * as messageService from "../services/messageService.js";
 
 const sendDirectMessage = async (req, res) => {
   try {
-    const { recipientId, content, imgUrl, conversationId } = req.body;
+    const { recipientId, content, images, conversationId } = req.body;
     const senderId = req.user.id;
 
     const message = await messageService.sendDirectMessage(
       recipientId,
       content,
-      imgUrl,
+      images,
       conversationId,
       senderId
     );
@@ -22,6 +22,25 @@ const sendDirectMessage = async (req, res) => {
   }
 };
 
-const sendGroupMessage = async (req, res) => {};
+const sendGroupMessage = async (req, res) => {
+  try {
+    const { conversationId, content, images } = req.body;
+    const senderId = req.user.id;
+    const conversation = req.conversation;
+    const message = await messageService.sendGroupMessage(
+      conversationId,
+      content,
+      images,
+      senderId,
+      conversation
+    );
+    return res.status(201).json({ message });
+  } catch (error) {
+    console.error("Lỗi xảy ra khi gửi tin nhắn nhóm:", error);
+    return res
+      .status(500)
+      .json({ error: "Lỗi máy chủ, vui lòng thử lại sau." });
+  }
+};
 
-module.exports = { sendDirectMessage, sendGroupMessage };
+export { sendDirectMessage, sendGroupMessage };

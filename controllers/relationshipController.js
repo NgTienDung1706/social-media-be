@@ -1,4 +1,4 @@
-const relationshipService = require("../services/relationshipService");
+import * as relationshipService from "../services/relationshipService.js";
 
 /**
  * API 1: Lấy danh sách followers của user
@@ -121,7 +121,7 @@ const removeFollower = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getFollowers,
   getFollowings,
   getRelationshipStatuses,

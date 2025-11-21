@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema(
   {
@@ -17,8 +17,9 @@ const messageSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    imgUrl: {
-      type: String,
+    images: {
+      type: [String],
+      default: [],
     },
   },
   { timestamps: true }
@@ -28,4 +29,4 @@ messageSchema.index({ conversationId: 1, createdAt: -1 });
 
 const Message = mongoose.model("Message", messageSchema);
 
-module.exports = Message;
+export default Message;

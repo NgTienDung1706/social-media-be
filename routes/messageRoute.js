@@ -1,10 +1,12 @@
-const router = require("express").Router();
-const auth = require("../middleware/auth.js");
-const ctrls = require("../controllers/messageController.js");
+import express from "express";
+const router = express.Router();
+import auth from "../middleware/auth.js";
+import * as ctrls from "../controllers/messageController.js";
+import { checkGroupMembership } from "../middleware/relationshipMiddleware.js";
 
 router.use(auth);
 
 router.post("/direct", ctrls.sendDirectMessage);
-router.post("/group", ctrls.sendGroupMessage);
+router.post("/group", checkGroupMembership, ctrls.sendGroupMessage);
 
-module.exports = router;
+export default router;

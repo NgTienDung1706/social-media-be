@@ -1,6 +1,6 @@
-const userService = require("../services/userService");
-const User = require("../models/userModel");
-const { tokenize } = require("../utils/searchHelper");
+import * as userService from "../services/userService.js";
+import User from "../models/userModel.js";
+import { tokenize } from "../utils/searchHelper.js";
 
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -152,13 +152,11 @@ const updateProfile = async (req, res) => {
     );
     return res.status(result.status).json(result.data);
   } catch (err) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Cập nhật thất bại",
-        error: err.message,
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Cập nhật thất bại",
+      error: err.message,
+    });
   }
 };
 
@@ -246,7 +244,7 @@ const logout = async (req, res) => {
       .json({ message: "Đã xảy ra lỗi, vui lòng thử lại." });
   }
 };
-module.exports = {
+export {
   login,
   getProfile,
   register,

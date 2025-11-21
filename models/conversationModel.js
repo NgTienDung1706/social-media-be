@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const paticipantSchema = new mongoose.Schema(
   {
@@ -37,9 +37,9 @@ const lastMessageSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    imgUrl: {
-      type: String,
-      default: null,
+    images: {
+      type: [String],
+      default: [],
     },
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -92,4 +92,4 @@ conversationSchema.index({ "participants.userId": 1, lastMessageAt: -1 });
 
 const Conversation = mongoose.model("Conversation", conversationSchema);
 
-module.exports = Conversation;
+export default Conversation;

@@ -1,7 +1,7 @@
-const Post = require("../models/postModel");
-const User = require("../models/userModel");
-const Comment = require("../models/commentModel");
-const cloudinary = require("../config/cloudinary");
+import Post from "../models/postModel.js";
+import User from "../models/userModel.js";
+import Comment from "../models/commentModel.js";
+import cloudinary from "../config/cloudinary.js";
 
 // Lấy danh sách bài viết theo userId, trả về dữ liệu phù hợp cho FE
 const getPostsByUser = async (userId, page, limit) => {
@@ -217,12 +217,7 @@ const createdPost = async (
   }
 };
 
-module.exports = {
-  getPostsByUser,
-  getUserPostsByUsername,
-  uploadSignature,
-  createdPost,
-};
+export { getPostsByUser, getUserPostsByUsername, uploadSignature, createdPost };
 
 // API xóa bài viết
 // app.delete('/api/posts/:id', async (req, res) => {

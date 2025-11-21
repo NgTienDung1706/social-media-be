@@ -1,4 +1,4 @@
-const updateConversationAfterCreateMessage = (
+export const updateConversationAfterCreateMessage = (
   conversation,
   message,
   senderId
@@ -9,7 +9,7 @@ const updateConversationAfterCreateMessage = (
     lastMessage: {
       _id: message._id,
       content: message.content,
-      imgUrl: message.imgUrl,
+      images: message.images,
       senderId,
       createdAt: message.createdAt,
     },
@@ -23,4 +23,14 @@ const updateConversationAfterCreateMessage = (
   });
 };
 
-module.exports = { updateConversationAfterCreateMessage };
+export const emitNewMessage = (io, conversation, message) => {
+  io.to(conversation._id.toString()).emit("new-message", {
+    message,
+    conversation: {
+      _id: conversation._id,
+      lastMessage: conversation.lastMessage,
+      lastMessageAt: conversation.lastMessageAt,
+    },
+    unreadCount: conversation.unreadCount,
+  });
+};

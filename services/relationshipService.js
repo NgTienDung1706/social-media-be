@@ -1,5 +1,5 @@
-const Relationship = require("../models/relationshipModel");
-const User = require("../models/userModel");
+import Relationship from "../models/relationshipModel.js";
+import User from "../models/userModel.js";
 
 /**
  * Lấy danh sách follower của userId
@@ -222,7 +222,7 @@ const removeFollower = async (currentUserId, userIdToRemove) => {
     return { message: "Người này không phải follower của bạn" };
   }
 };
-module.exports = {
+export {
   getFollowers,
   getFollowings,
   getRelationshipStatuses,

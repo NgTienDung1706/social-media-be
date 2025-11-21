@@ -1,4 +1,4 @@
-const postService = require("../services/postService");
+import * as postService from "../services/postService.js";
 
 // Lấy danh sách bài viết của user hiện tại
 const getMyPosts = async (req, res) => {
@@ -72,9 +72,4 @@ const createdPost = async (req, res) => {
     });
   }
 };
-module.exports = {
-  getMyPosts,
-  getUserPostsByUsername,
-  uploadSignature,
-  createdPost,
-};
+export { getMyPosts, getUserPostsByUsername, uploadSignature, createdPost };

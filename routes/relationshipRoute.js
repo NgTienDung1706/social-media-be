@@ -1,7 +1,7 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const relationshipController = require("../controllers/relationshipController");
-const auth = require("../middleware/auth");
+import * as relationshipController from "../controllers/relationshipController.js";
+import auth from "../middleware/auth.js";
 
 // Lấy danh sách followers của user
 router.get("/:username/followers", auth, relationshipController.getFollowers);
@@ -16,4 +16,4 @@ router.delete(
   auth,
   relationshipController.removeFollower
 );
-module.exports = router;
+export default router;

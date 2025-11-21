@@ -1,12 +1,12 @@
-require("dotenv").config();
-const User = require("../models/userModel");
-const Post = require("../models/postModel");
-const Relationship = require("../models/relationshipModel");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const { sendMail } = require("../utils/mail");
-const { tokenize, normalizeQuery } = require("../utils/searchHelper");
+import "dotenv/config";
+import User from "../models/userModel.js";
+import Post from "../models/postModel.js";
+import Relationship from "../models/relationshipModel.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { sendMail } from "../utils/mail.js";
+import { tokenize, normalizeQuery } from "../utils/searchHelper.js";
 
 const deleteInfo = (user) => {
   const userSafe = user.toObject();
@@ -642,7 +642,7 @@ const logout = async (refreshToken) => {
     };
   }
 };
-module.exports = {
+export {
   loginUser,
   getUserProfile,
   registerUser,

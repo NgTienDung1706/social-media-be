@@ -1,19 +1,20 @@
-const Conversation = require("../models/conversationModel");
-const Message = require("../models/messageModel");
-const {
+import Conversation from "../models/conversationModel.js";
+import Message from "../models/messageModel.js";
+import {
   updateConversationAfterCreateMessage,
-} = require("../utils/messageHelper");
+  emitNewMessage,
+} from "../utils/messageHelper.js";
 
-const sendDirectMessage = async (
+export const sendDirectMessage = async (
   recipientId,
   content,
-  imgUrl,
+  images,
   conversationId,
   senderId
 ) => {
   let conversation = null;
 
-  if (!content && !imgUrl) {
+  if (!content && (!images || images.length === 0)) {
     return res
       .status(400)
       .json({ message: "Nội dung tin nhắn không được để trống" });
@@ -40,14 +41,40 @@ const sendDirectMessage = async (
     conversationId: conversation._id,
     senderId,
     content,
-    imgUrl,
+    images,
   });
 
   updateConversationAfterCreateMessage(conversation, message, senderId);
 
   await conversation.save();
 
+  emitNewMessage(io, conversation, message);
+
   return message;
 };
 
-module.exports = { sendDirectMessage };
+export const sendGroupMessage = async (
+  conversationId,
+  content,
+  images,
+  senderId,
+  conversation
+) => {
+  try {
+    if (!content && (!images || images.length === 0)) {
+      return res.status(400).json("Thiếu nội dung");
+    }
+    const message = await Message.create({
+      conversationId,
+      senderId,
+      content,
+      images,
+    });
+    updateConversationAfterCreateMessage(conversation, message, senderId);
+    await conversation.save();
+    emitNewMessage(io, conversation, message);
+    return message;
+  } catch (error) {
+    throw new Error("Lỗi khi gửi tin nhắn nhóm: " + error.message);
+  }
+};
