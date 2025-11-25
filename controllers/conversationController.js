@@ -4,6 +4,7 @@ import {
   getConversations,
   getMessages,
   getUserConversationsForSocketIO,
+  markConversationAsRead,
 } from "../services/conversationService.js";
 
 export const createConversationController = async (req, res) => {
@@ -53,5 +54,18 @@ export const getUserConversationsForSocketIOController = async (userId) => {
       "Lỗi khi lấy cuộc trò chuyện cho Socket.IO: " + error.message
     );
     return [];
+  }
+};
+
+export const markConversationAsReadController = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user.id;
+
+    const result = await markConversationAsRead(conversationId, userId);
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

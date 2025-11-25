@@ -123,7 +123,7 @@ export const getMessages = async (conversationId, limit, cursor) => {
     if (messages.length > Number(limit)) {
       const nextMessage = messages[messages.length - 1];
       nextCursor = nextMessage.createdAt.toISOString();
-      messages = messages.pop();
+      messages.pop();
     }
     messages = messages.reverse();
 
@@ -143,6 +143,48 @@ export const getUserConversationsForSocketIO = async (userId) => {
     }).select("_id");
 
     return conversations.map((convo) => convo._id.toString());
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const markConversationAsRead = async (conversationId, userId) => {
+  try {
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    // Check if user is a participant
+    const isParticipant = conversation.participants.some(
+      (p) => p.userId.toString() === userId.toString()
+    );
+
+    if (!isParticipant) {
+      throw new Error("User is not a participant of this conversation");
+    }
+
+    // Reset unreadCount for this user
+    conversation.unreadCount.set(userId, 0);
+
+    // Add user to seenBy if not already there
+    if (!conversation.seenBy.includes(userId)) {
+      conversation.seenBy.push(userId);
+    }
+
+    await conversation.save();
+
+    console.log(
+      "UnreadCout từ markConversationAsRead sau khi lưu",
+      conversation.unreadCount
+    );
+
+    return {
+      conversationId: conversation._id,
+      unreadCount: conversation.unreadCount,
+      seenBy: conversation.seenBy,
+    };
   } catch (error) {
     throw error;
   }

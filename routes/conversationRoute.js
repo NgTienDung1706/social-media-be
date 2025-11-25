@@ -7,5 +7,9 @@ router.use(auth);
 router.post("/", ctrls.createConversationController);
 router.get("/", ctrls.getConversationsController);
 router.get("/:conversationId/messages", ctrls.getMessagesController);
+router.post(
+  "/:conversationId/mark-as-read",
+  ctrls.markConversationAsReadController
+);
 
 export default router;
