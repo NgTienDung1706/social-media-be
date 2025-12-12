@@ -8,5 +8,6 @@ router.use(auth);
 
 router.post("/direct", ctrls.sendDirectMessage);
 router.post("/group", checkGroupMembership, ctrls.sendGroupMessage);
+router.get("/upload-signature", ctrls.uploadSignatureMessage);
 
 export default router;

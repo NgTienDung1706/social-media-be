@@ -1,5 +1,6 @@
 import Conversation from "../models/conversationModel.js";
 import Message from "../models/messageModel.js";
+import cloudinary from "../config/cloudinary.js";
 import {
   updateConversationAfterCreateMessage,
   emitNewMessage,
@@ -77,5 +78,24 @@ export const sendGroupMessage = async (
     return message;
   } catch (error) {
     throw new Error("Lỗi khi gửi tin nhắn nhóm: " + error.message);
+  }
+};
+
+export const uploadSignatureMessage = async () => {
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const signature = cloudinary.utils.api_sign_request(
+      { timestamp: timestamp, folder: "messages" },
+      process.env.CLOUDINARY_API_SECRET
+    );
+
+    return {
+      signature,
+      timestamp,
+      cloudname: process.env.CLOUDINARY_CLOUD_NAME,
+      apikey: process.env.CLOUDINARY_API_KEY,
+    };
+  } catch (err) {
+    throw new Error("Error generating upload signature: " + err.message);
   }
 };

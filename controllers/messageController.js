@@ -43,4 +43,16 @@ const sendGroupMessage = async (req, res) => {
   }
 };
 
-export { sendDirectMessage, sendGroupMessage };
+const uploadSignatureMessage = async (req, res) => {
+  try {
+    const signatureData = await messageService.uploadSignatureMessage();
+    res.json(signatureData);
+  } catch (err) {
+    res.status(500).json({
+      message: "Lỗi server khi lấy upload signature",
+      error: err.message,
+    });
+  }
+};
+
+export { sendDirectMessage, sendGroupMessage, uploadSignatureMessage };

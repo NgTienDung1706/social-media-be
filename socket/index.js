@@ -22,7 +22,7 @@ const onlineUsers = new Map(); // {userId: socketId}
 
 io.on("connection", async (socket) => {
   const user = socket.user;
-  console.log(`${user.username} online với socket ${socket.id}`);
+  console.log(`${user.username} 💚 online với socket ${socket.id}`);
 
   onlineUsers.set(user._id, socket.id);
 
@@ -38,7 +38,7 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", () => {
     onlineUsers.delete(user._id);
     io.emit("online-users", Array.from(onlineUsers.keys()));
-    console.log("User disconnected socket:", socket.id);
+    console.log(`${user.username} 💔 disconnected socket: ${socket.id}`);
   });
 
   // Handle mark conversation as read
@@ -50,6 +50,7 @@ io.on("connection", async (socket) => {
       io.to(conversationId).emit("mark-as-read-success", {
         conversationId: result.conversationId,
         userId: user._id,
+        seenBy: result.seenBy,
         unreadCount: result.unreadCount,
       });
 
