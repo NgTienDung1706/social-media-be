@@ -129,18 +129,47 @@ const getUserPostsByUsername = async (username, page, limit) => {
   // Format dữ liệu cho FE
   const formattedPosts = posts.map((post) => {
     const author = post.author || {};
+
+    // Xác định media: mảng url (cho ảnh) hoặc chuỗi url (cho video)
+    let media;
+    const mediaItems = post.content.media || [];
+    if (mediaItems.length > 0) {
+      const isVideo = mediaItems[0].type === "video";
+      if (isVideo) {
+        // Nếu là video, trả về url của video duy nhất
+        media = mediaItems[0].url;
+      } else {
+        // Nếu là ảnh, trả về mảng các url
+        media = mediaItems.map((item) => item.url);
+      }
+    } else {
+      media = [];
+    }
+
     return {
       _id: post._id,
       avatar: author.profile?.avatar || "",
       username: author.username || "",
       time: post.createdAt,
-      caption: post.content.caption,
-      hashtags: post.content.hashtags,
-      imgList: post.content.pictures,
+      caption: post.content.caption || "",
+      hashtags: post.content.hashtags || [],
+      media,
+      emotion: post.emotion || {},
+      tagged_users:
+        post.tagged_users.map((user) => ({
+          _id: user._id,
+          username: user.username || "",
+          avatar: user.profile?.avatar || "",
+          fullname: `${user.profile?.firstname || ""} ${
+            user.profile?.lastname || ""
+          }`.trim(),
+        })) || [],
+      //imgList: post.content.pictures,
       createdAt: post.createdAt,
-      reactions: post.reactions,
+      reactions: post.reactions || {},
       likes: post.reactions?.love?.length || 0,
       commentCount: commentCountMap[post._id] || 0,
+      visibility: post.visibility || "public",
     };
   });
 

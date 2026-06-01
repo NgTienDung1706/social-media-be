@@ -35,10 +35,19 @@ io.on("connection", async (socket) => {
     socket.join(conversationId);
   });
 
+  // Join user vào room với userId để nhận event conversation mới
+  socket.join(user._id.toString());
+
   socket.on("disconnect", () => {
     onlineUsers.delete(user._id);
     io.emit("online-users", Array.from(onlineUsers.keys()));
     console.log(`${user.username} 💔 disconnected socket: ${socket.id}`);
+  });
+
+  // Handle khi client nhận được conversation mới và muốn join room
+  socket.on("join-conversation", ({ conversationId }) => {
+    socket.join(conversationId);
+    console.log(`${user.username} joined conversation room: ${conversationId}`);
   });
 
   // Handle mark conversation as read

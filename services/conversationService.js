@@ -50,15 +50,34 @@ export const createConversation = async (userId, type, name, memberIds) => {
     }
 
     await conversation.populate([
-      { path: "participants.userId", select: "displayName avatarUrl" },
+      {
+        path: "participants.userId",
+        select: "profile.lastname profile.firstname profile.avatar username",
+      },
       {
         path: "seenBy",
-        select: "displayName avatarUrl",
+        select: "profile.lastname profile.firstname profile.avatar username",
       },
-      { path: "lastMessage.senderId", select: "displayName avatarUrl" },
+      {
+        path: "lastMessage.senderId",
+        select: "profile.lastname profile.firstname profile.avatar username",
+      },
     ]);
 
-    return conversation;
+    const formattedConversation = {
+      ...conversation.toObject(),
+      participants: (conversation.participants || []).map((p) => ({
+        _id: p.userId?._id,
+        fullname: `${p.userId?.profile?.lastname || ""} ${
+          p.userId?.profile?.firstname || ""
+        }`.trim(),
+        username: p.userId?.username || "",
+        avatar: p.userId?.profile?.avatar || "",
+        joinedAt: p.joinedAt,
+      })),
+    };
+
+    return formattedConversation;
   } catch (error) {
     throw error;
   }

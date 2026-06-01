@@ -6,6 +6,7 @@ import {
   getUserConversationsForSocketIO,
   markConversationAsRead,
 } from "../services/conversationService.js";
+import { io } from "../socket/index.js";
 
 export const createConversationController = async (req, res) => {
   try {
@@ -17,6 +18,14 @@ export const createConversationController = async (req, res) => {
       name,
       memberIds
     );
+    // Emit đến TẤT CẢ participants (bao gồm creator) để notify conversation mới
+    // Sử dụng room userId để target online users
+    conversation.participants.forEach((participant) => {
+      const participantId = participant._id.toString(); // Đảm bảo string
+      io.to(participantId).emit("new-conversation", {
+        conversation: conversation,
+      });
+    });
     res.status(201).json(conversation);
   } catch (error) {
     res.status(500).json({ error: error.message });
